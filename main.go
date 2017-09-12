@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"docker-registry/api"
 	"fmt"
 	"log"
@@ -102,6 +101,17 @@ Outer:
 	return imgs
 }
 
+func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, n int) []*api.DockerImage {
+	var allimgs []*api.DockerImage
+	for _, repo := range repos {
+		repoimgs := fetch_images(r, []string{repo}, nil)
+		if len(repoimgs) > n {
+			allimgs = append(allimgs, repoimgs[n:]...)
+		}
+	}
+	return allimgs
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
@@ -157,6 +167,10 @@ func main() {
 				cli.BoolFlag{
 					Name: "delete",
 				},
+				cli.IntFlag{
+					Name:  "exclude-top",
+					Usage: "Return everything but the top N images per repo",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				repos := c.StringSlice("repo")
@@ -189,7 +203,14 @@ func main() {
 				}
 
 				r := init_registry(c)
-				imgs := fetch_images(r, repos, filters)
+				var imgs []*api.DockerImage
+
+				//The -exclude-top n flag ignores all other filters
+				if exclude_top := c.Int("exclude-top"); exclude_top > 0 {
+					imgs = fetch_images_older_than_n_latest(r, repos, exclude_top)
+				} else {
+					imgs = fetch_images(r, repos, filters)
+				}
 				if len(imgs) == 0 {
 					return nil
 				}
@@ -198,17 +219,8 @@ func main() {
 					fmt.Printf("%s %s %s:%s\n", img.Created.Format("2006-01-02 15:04:05"), img.ContentDigest[:16], img.Name, img.Tag)
 				}
 				if c.Bool("delete") {
-				Inputloop:
-					for {
-						reader := bufio.NewReader(os.Stdin)
-						fmt.Printf("Do you really want to delete these %d images? (y/n): ", len(imgs))
-						ans, _ := reader.ReadString('\n')
-						switch strings.TrimSpace(ans) {
-						case "y":
-							break Inputloop
-						case "n":
-							return nil
-						}
+					if !Confirm(fmt.Sprintf("Do you really want to delete these %d images? (y/n): ", len(imgs))) {
+						return nil
 					}
 					for _, img := range imgs {
 						fmt.Printf("Deleting (%s:%s): ", img.Name, img.Tag)
