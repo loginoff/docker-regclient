@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"docker-regclient/api"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/loginoff/docker-regclient/api"
 	"github.com/urfave/cli"
 )
 
@@ -118,6 +118,7 @@ func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, n i
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "A small utility for listing and deleting images from a Docker registry"
 	app.Version = "1.0.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
