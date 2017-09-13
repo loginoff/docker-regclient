@@ -192,7 +192,7 @@ func NewDockerRegistry(url string, verify_ssl bool) (*DockerRegistry, error) {
 	r := DockerRegistry{
 		URL: url,
 		client: http.Client{
-			Timeout:   time.Second * 5,
+			Timeout:   time.Second * 30,
 			Transport: transport,
 		},
 	}

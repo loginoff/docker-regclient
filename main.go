@@ -105,10 +105,10 @@ Outer:
 	return imgs
 }
 
-func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, n int) []*api.DockerImage {
+func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, filters []ImgFilter, n int) []*api.DockerImage {
 	var allimgs []*api.DockerImage
 	for _, repo := range repos {
-		repoimgs := fetch_images(r, []string{repo}, nil)
+		repoimgs := fetch_images(r, []string{repo}, filters)
 		if len(repoimgs) > n {
 			allimgs = append(allimgs, repoimgs[n:]...)
 		}
@@ -119,7 +119,7 @@ func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, n i
 func main() {
 	app := cli.NewApp()
 	app.Usage = "A small utility for listing and deleting images from a Docker registry"
-	app.Version = "1.0.0"
+	app.Version = "1.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "url, u",
@@ -210,9 +210,10 @@ func main() {
 				r := init_registry(c)
 				var imgs []*api.DockerImage
 
-				//The -exclude-top n flag ignores all other filters
+				//The -exclude-top n flag requires special handling, because
+				//it works on a per repo basis
 				if exclude_latest := c.Int("exclude-latest"); exclude_latest > 0 {
-					imgs = fetch_images_older_than_n_latest(r, repos, exclude_latest)
+					imgs = fetch_images_older_than_n_latest(r, repos, filters, exclude_latest)
 				} else {
 					imgs = fetch_images(r, repos, filters)
 				}
