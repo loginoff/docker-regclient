@@ -154,7 +154,7 @@ func main() {
 		},
 		{
 			Name:  "images",
-			Usage: "Display images from specified repositories",
+			Usage: "Display images (and possibly delete) from specified repositories",
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
 					Name: "repo, r",
@@ -172,7 +172,7 @@ func main() {
 					Name: "delete",
 				},
 				cli.IntFlag{
-					Name:  "exclude-top",
+					Name:  "exclude-latest",
 					Usage: "Return everything but the top N images per repo",
 				},
 			},
@@ -210,8 +210,8 @@ func main() {
 				var imgs []*api.DockerImage
 
 				//The -exclude-top n flag ignores all other filters
-				if exclude_top := c.Int("exclude-top"); exclude_top > 0 {
-					imgs = fetch_images_older_than_n_latest(r, repos, exclude_top)
+				if exclude_latest := c.Int("exclude-latest"); exclude_latest > 0 {
+					imgs = fetch_images_older_than_n_latest(r, repos, exclude_latest)
 				} else {
 					imgs = fetch_images(r, repos, filters)
 				}
