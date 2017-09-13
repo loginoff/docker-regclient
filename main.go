@@ -1,7 +1,8 @@
 package main
 
 import (
-	"docker-registry/api"
+	"bufio"
+	"docker-regclient/api"
 	"fmt"
 	"log"
 	"os"
@@ -28,6 +29,9 @@ func (s ByCreated) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s ByCreated) Less(i, j int) bool { return s[i].Created.After(s[j].Created) }
 
 func init_registry(c *cli.Context) *api.DockerRegistry {
+	if c.GlobalString("url") == "" {
+		log.Fatalf("You must specify a registry (eg --url https://my.registry.com:5000)")
+	}
 	r, err := api.NewDockerRegistry(c.GlobalString("url"), c.GlobalBool("verify-tls"))
 	if err != nil {
 		log.Fatalf("Unable to connect to Docker registry at %s: %v", c.String("url"), err)
@@ -114,10 +118,10 @@ func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, n i
 
 func main() {
 	app := cli.NewApp()
+	app.Version = "1.0.0"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "url, u",
-			Value: "http://localhost",
 			Usage: "The URL of your Docker Registry",
 		},
 		cli.BoolFlag{
@@ -240,13 +244,21 @@ func main() {
 			Usage: "Reads lines containing repository:tag from STDIN and deletes the respective images from the Registry",
 			Action: func(c *cli.Context) error {
 				r := init_registry(c)
-				imgs := fetch_images(r, []string{"rush/portal"}, nil)
-				portalimg := imgs[len(imgs)-1]
-				log.Println(portalimg)
 
-				err := r.DeleteImage(portalimg)
-				if err != nil {
-					log.Printf("ERROR deleting image (%s:%s): %v", portalimg.Name, portalimg.Tag, err)
+				scanner := bufio.NewScanner(os.Stdin)
+				for scanner.Scan() {
+					imagetext := scanner.Text()
+					img, err := r.ImageDetails(imagetext)
+
+					if err != nil {
+						fmt.Printf("Unable to retrieve details for %s\n", imagetext)
+						continue
+					}
+
+					fmt.Printf("Deleting %s:%s\n", img.Name, img.Tag)
+					if err := r.DeleteImage(img); err != nil {
+						fmt.Println(err)
+					}
 				}
 				return nil
 			},

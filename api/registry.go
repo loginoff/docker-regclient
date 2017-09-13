@@ -26,7 +26,7 @@ type RegistryErrorResponse struct {
 func (re RegistryErrorResponse) Error() string {
 	var s string
 	for _, err := range re.Errors {
-		s = fmt.Sprintf("%s%s - %s\n", s, err.Code, err.Message)
+		s = fmt.Sprintf("%s%s - %s", s, err.Code, err.Message)
 	}
 	return s
 }
