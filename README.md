@@ -5,6 +5,7 @@ Can be invoked from cron to periodically cleanup images from a Docker registry.
 
 ## Usage
 Imagine that you have a Docker registry containing images in two repositories
+```
 webserver:devbuild-5
 webserver:devbuild-4
 webserver:rc3
@@ -19,6 +20,7 @@ backend-server:dev-55
 backend-server:dev-54
 backend-server:dev-53
 .....
+```
 
 You could use the following command line to delete all but the latest three images from the `webserver` and `backend-server` repositories that have a tag containing the string `dev`.
 
