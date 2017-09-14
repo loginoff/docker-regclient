@@ -71,6 +71,7 @@ func fetch_images(r *api.DockerRegistry, repos []string, filters []ImgFilter) []
 	go func() { tagwait.Wait(); close(tagschan) }()
 
 	for currepotags := range tagschan {
+		fmt.Printf("Fetching image details from repository %s\n", currepotags.repo)
 		for _, tag := range currepotags.tags {
 			imgwait.Add(1)
 			//This is necessary to use "tag" from inside the clojure
@@ -161,7 +162,8 @@ func main() {
 					Name: "repo, r",
 				},
 				cli.StringFlag{
-					Name: "older-than",
+					Name:  "older-than",
+					Usage: "Match images older than 2016-12-03 for example",
 				},
 				cli.StringFlag{
 					Name: "tag-contains",
@@ -170,11 +172,16 @@ func main() {
 					Name: "tag-exclude",
 				},
 				cli.BoolFlag{
-					Name: "delete",
+					Name:  "delete",
+					Usage: "Delete images matching all filters",
 				},
 				cli.IntFlag{
 					Name:  "exclude-latest",
 					Usage: "Return everything but the top N images per repo",
+				},
+				cli.BoolFlag{
+					Name:  "yes",
+					Usage: "Do not prompt, when deleting images",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -225,8 +232,10 @@ func main() {
 					fmt.Printf("%s %s %s:%s\n", img.Created.Format("2006-01-02 15:04:05"), img.ContentDigest[:16], img.Name, img.Tag)
 				}
 				if c.Bool("delete") {
-					if !Confirm(fmt.Sprintf("Do you really want to delete these %d images? (y/n): ", len(imgs))) {
-						return nil
+					if !c.Bool("yes") {
+						if !Confirm(fmt.Sprintf("Do you really want to delete these %d images? (y/n): ", len(imgs))) {
+							return nil
+						}
 					}
 					for _, img := range imgs {
 						fmt.Printf("Deleting (%s:%s): ", img.Name, img.Tag)
