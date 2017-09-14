@@ -120,7 +120,7 @@ func fetch_images_older_than_n_latest(r *api.DockerRegistry, repos []string, fil
 func main() {
 	app := cli.NewApp()
 	app.Usage = "A small utility for listing and deleting images from a Docker registry"
-	app.Version = "1.0.1"
+	app.Version = "1.0.2"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "url, u",
