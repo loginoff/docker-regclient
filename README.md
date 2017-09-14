@@ -61,6 +61,13 @@ docker-regclient -url https://my.docker.registry \
 
 This is useful when you have some CI system that automatically builds and pushes new Docker images into your registry and you only want to keep the latest n images.
 
+## Reclaiming space
+This utility only works against the API of a Docker registry and marks the images to be deleted.
+In order to actually claim the storage space under the deleted images, you will have to force the registry to garbage collect. In case you use the official registry image:
+```
+docker exec -ti registry-container /bin/registry garbage-collect /etc/docker/registry/config.yml
+```
+
 ## Building locally
 * Install Go
 * go get github.com/loginoff/docker-regclient
